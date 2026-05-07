@@ -35,16 +35,26 @@ export async function getCurrentUser(): Promise<DbUser> {
     throw new Error(`Clerk user ${userId} has no email address`);
   }
 
-  const [created] = await db
+  const inserted = await db
     .insert(users)
     .values({
       clerkId: userId,
       email: primaryEmail,
       imageUrl: clerkUser.imageUrl,
     })
+    .onConflictDoNothing({ target: users.clerkId })
     .returning();
 
-  return created;
+  if (inserted[0]) return inserted[0];
+
+  // Lost the insert race against a concurrent request — re-read.
+  const [winner] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, userId))
+    .limit(1);
+  if (!winner) throw new Error("User row missing after conflict resolution");
+  return winner;
 }
 
 export async function maybeCurrentUser(): Promise<DbUser | null> {

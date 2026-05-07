@@ -9,6 +9,12 @@ import { Label } from "@/components/ui/label";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { GOALS } from "@/lib/content/goals";
 import type { Gender, Goal } from "@/lib/db/schema";
+import {
+  cmToFeetInches,
+  feetInchesToCm,
+  kgToLbs,
+  lbsToKg,
+} from "@/lib/nutrition/units";
 import { cn } from "@/lib/utils";
 import { saveOnboarding } from "@/app/(app)/onboarding/actions";
 
@@ -22,24 +28,34 @@ type Defaults = Partial<{
 export function OnboardingWizard({ defaults }: { defaults?: Defaults }) {
   const [step, setStep] = useState(1);
   const [gender, setGender] = useState<Gender | undefined>(defaults?.gender);
-  const [weight, setWeight] = useState<string>(
-    defaults?.weightKg ? String(defaults.weightKg) : "",
+  const [weightLbs, setWeightLbs] = useState<string>(
+    defaults?.weightKg ? String(Math.round(kgToLbs(defaults.weightKg))) : "",
   );
-  const [height, setHeight] = useState<string>(
-    defaults?.heightCm ? String(defaults.heightCm) : "",
+  const initialFtIn = defaults?.heightCm
+    ? cmToFeetInches(defaults.heightCm)
+    : null;
+  const [feet, setFeet] = useState<string>(
+    initialFtIn ? String(initialFtIn.feet) : "",
+  );
+  const [inches, setInches] = useState<string>(
+    initialFtIn ? String(initialFtIn.inches) : "",
   );
   const [goal, setGoal] = useState<Goal | undefined>(defaults?.goal);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const weightNum = Number(weight);
-  const heightNum = Number(height);
+  const lbsNum = Number(weightLbs);
+  const feetNum = Number(feet);
+  const inchesNum = inches === "" ? 0 : Number(inches);
   const step1Valid =
     gender &&
-    Number.isFinite(weightNum) &&
-    weightNum > 0 &&
-    Number.isFinite(heightNum) &&
-    heightNum > 0;
+    Number.isFinite(lbsNum) &&
+    lbsNum > 0 &&
+    Number.isFinite(feetNum) &&
+    feetNum > 0 &&
+    Number.isFinite(inchesNum) &&
+    inchesNum >= 0 &&
+    inchesNum < 12;
 
   function submit() {
     if (!gender || !goal) return;
@@ -48,8 +64,8 @@ export function OnboardingWizard({ defaults }: { defaults?: Defaults }) {
       try {
         await saveOnboarding({
           gender,
-          weightKg: weightNum,
-          heightCm: heightNum,
+          weightKg: lbsToKg(lbsNum),
+          heightCm: feetInchesToCm(feetNum, inchesNum),
           goal,
         });
       } catch (e) {
@@ -103,34 +119,54 @@ export function OnboardingWizard({ defaults }: { defaults?: Defaults }) {
 
             <div className="mb-4">
               <Label htmlFor="weight" className="mb-2 flex items-center gap-2">
-                <Weight className="h-4 w-4" /> Weight (kg)
+                <Weight className="h-4 w-4" /> Weight (lbs)
               </Label>
               <Input
                 id="weight"
                 type="number"
                 inputMode="decimal"
-                min={20}
-                max={500}
-                placeholder="e.g. 75"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                min={50}
+                max={1000}
+                placeholder="e.g. 165"
+                value={weightLbs}
+                onChange={(e) => setWeightLbs(e.target.value)}
               />
             </div>
 
             <div>
-              <Label htmlFor="height" className="mb-2 flex items-center gap-2">
-                <Ruler className="h-4 w-4" /> Height (cm)
+              <Label className="mb-2 flex items-center gap-2">
+                <Ruler className="h-4 w-4" /> Height
               </Label>
-              <Input
-                id="height"
-                type="number"
-                inputMode="decimal"
-                min={80}
-                max={300}
-                placeholder="e.g. 175"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Input
+                    id="feet"
+                    type="number"
+                    inputMode="numeric"
+                    min={3}
+                    max={8}
+                    placeholder="e.g. 5"
+                    value={feet}
+                    onChange={(e) => setFeet(e.target.value)}
+                    aria-label="Feet"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">feet</p>
+                </div>
+                <div>
+                  <Input
+                    id="inches"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={11}
+                    placeholder="e.g. 9"
+                    value={inches}
+                    onChange={(e) => setInches(e.target.value)}
+                    aria-label="Inches"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">inches</p>
+                </div>
+              </div>
             </div>
           </Card>
 
