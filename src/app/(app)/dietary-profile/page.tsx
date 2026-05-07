@@ -1,10 +1,12 @@
+import { AppHeader } from "@/components/dashboard/AppHeader";
 import { DietaryWizard } from "@/components/dietary/DietaryWizard";
 import { getCurrentUser } from "@/lib/auth/currentUser";
 
 export default async function DietaryProfilePage() {
   const user = await getCurrentUser();
   return (
-    <main className="min-h-dvh">
+    <div className="min-h-dvh">
+      <AppHeader user={user} />
       <DietaryWizard
         defaults={{
           healthConditions: user.healthConditions,
@@ -12,6 +14,6 @@ export default async function DietaryProfilePage() {
           cravings: user.cravings,
         }}
       />
-    </main>
+    </div>
   );
 }
