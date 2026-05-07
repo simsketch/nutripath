@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NutriPath</string>
+    <string name="title_activity_main">NutriPath</string>
+    <string name="package_name">com.nutripath.app</string>
+    <string name="custom_url_scheme">com.nutripath.app</string>
+</resources>

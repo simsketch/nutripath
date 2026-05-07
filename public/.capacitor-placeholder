@@ -1,0 +1,3 @@
+This directory exists so `cap sync` can run.
+The Capacitor app is server-driven (loads from server.url in capacitor.config.ts),
+so the contents of this directory are not actually used at runtime.
