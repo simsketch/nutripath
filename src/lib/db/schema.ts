@@ -52,6 +52,27 @@ export type DayPlan = {
   meals: Meal[];
 };
 
+export const groceryCategoryEnum = [
+  "produce",
+  "protein",
+  "dairy",
+  "pantry",
+  "frozen",
+  "other",
+] as const;
+export type GroceryCategory = (typeof groceryCategoryEnum)[number];
+
+export type GroceryItem = {
+  name: string;
+  quantity: string;
+  category: GroceryCategory;
+};
+
+export type GroceryList = {
+  items: GroceryItem[];
+  generatedAt: string;
+};
+
 export const users = nutripath.table("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   clerkId: text("clerk_id").notNull().unique(),
@@ -75,6 +96,10 @@ export const users = nutripath.table("users", {
     .array()
     .notNull()
     .default(sql`ARRAY[]::text[]`),
+  dislikedMeals: text("disliked_meals")
+    .array()
+    .notNull()
+    .default(sql`ARRAY[]::text[]`),
 
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -93,6 +118,7 @@ export const mealPlans = nutripath.table(
     goal: text("goal", { enum: goalEnum }).notNull(),
     targetCalories: integer("target_calories").notNull(),
     days: jsonb("days").$type<DayPlan[]>().notNull(),
+    groceryList: jsonb("grocery_list").$type<GroceryList | null>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

@@ -44,6 +44,7 @@ export type GenerateInput = {
   healthConditions: string[];
   dietaryPreferences: string[];
   cravings: string[];
+  dislikedMeals?: string[];
 };
 
 const goalGuidance: Record<Goal, string> = {
@@ -75,6 +76,9 @@ function buildPrompt(input: GenerateInput): string {
     conditions.length ? `- Health conditions: ${conditions.join(", ")}` : null,
     prefs.length ? `- Dietary restrictions (must respect strictly): ${prefs.join(", ")}` : null,
     cravings.length ? `- Habits to manage gently: ${cravings.join(", ")}` : null,
+    input.dislikedMeals?.length
+      ? `- The user has explicitly disliked these meals before — do NOT suggest them or close variants: ${input.dislikedMeals.join("; ")}`
+      : null,
     ``,
     `Rules:`,
     `1. Produce exactly 7 days, Monday through Sunday in order.`,

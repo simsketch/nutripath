@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ShoppingBasket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WeekSelector } from "./WeekSelector";
 import { WeekOverview } from "./WeekOverview";
 import { DayCard } from "./DayCard";
+import { TodayHero } from "./TodayHero";
 import { todayDay, type WeekRef } from "@/lib/nutrition/week";
 import { goalMeta } from "@/lib/content/goals";
-import { dayOfWeekEnum, type DayPlan, type Goal } from "@/lib/db/schema";
+import {
+  dayOfWeekEnum,
+  type DayPlan,
+  type Goal,
+  type Meal,
+} from "@/lib/db/schema";
 
 type LoadedPlan = {
   id: string;
@@ -79,12 +86,38 @@ export function Dashboard({
     });
   }
 
+  async function swapMealAt({
+    day,
+    mealType,
+    dislike,
+  }: {
+    day: DayPlan["day"];
+    mealType: Meal["type"];
+    dislike: boolean;
+  }) {
+    if (!plan) return;
+    const res = await fetch("/api/meal-plan/swap-meal", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ planId: plan.id, day, mealType, dislike }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error ?? "Swap failed");
+    }
+    const data = await res.json();
+    if (data.plan) setPlan(data.plan);
+  }
+
   const meta = goalMeta(goal);
   const today = todayDay();
+  const todayPlan = plan?.days.find((d) => d.day === today);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">
       <WeekSelector week={week} onChange={setWeek} />
+
+      {plan && todayPlan && <TodayHero plan={todayPlan} />}
 
       {loading && (
         <div className="mt-12 text-center text-sm text-muted-foreground">
@@ -108,6 +141,14 @@ export function Dashboard({
             onRegenerate={() => generate(true)}
             regenerating={generating}
           />
+          <div className="-mt-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/grocery-list?planId=${plan.id}`}>
+                <ShoppingBasket className="h-4 w-4" />
+                Grocery list for this week
+              </Link>
+            </Button>
+          </div>
           <section>
             <h2 className="font-display text-xl font-semibold">Daily Meals</h2>
             <div className="mt-3 space-y-3">
@@ -120,6 +161,7 @@ export function Dashboard({
                     plan={d}
                     isToday={day === today}
                     defaultOpen={day === today}
+                    onSwap={swapMealAt}
                   />
                 );
               })}

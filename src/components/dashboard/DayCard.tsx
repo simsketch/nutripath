@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MealCard } from "./MealCard";
 import { macroIconMap } from "./MacroIcons";
-import type { DayPlan } from "@/lib/db/schema";
+import type { DayPlan, Meal } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 
 const DAY_LABELS: Record<DayPlan["day"], string> = {
@@ -22,10 +22,12 @@ export function DayCard({
   plan,
   isToday,
   defaultOpen,
+  onSwap,
 }: {
   plan: DayPlan;
   isToday?: boolean;
   defaultOpen?: boolean;
+  onSwap?: (args: { day: DayPlan["day"]; mealType: Meal["type"]; dislike: boolean }) => Promise<void>;
 }) {
   const [open, setOpen] = useState(Boolean(defaultOpen));
 
@@ -91,7 +93,12 @@ export function DayCard({
           </div>
           <div className="space-y-3">
             {plan.meals.map((m, idx) => (
-              <MealCard key={`${plan.day}-${m.type}-${idx}`} meal={m} />
+              <MealCard
+                key={`${plan.day}-${m.type}-${idx}`}
+                meal={m}
+                day={plan.day}
+                onSwap={onSwap}
+              />
             ))}
           </div>
         </div>

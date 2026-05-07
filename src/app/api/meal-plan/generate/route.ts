@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     healthConditions: user.healthConditions,
     dietaryPreferences: user.dietaryPreferences,
     cravings: user.cravings,
+    dislikedMeals: user.dislikedMeals,
   });
 
   if (existing[0]) {
